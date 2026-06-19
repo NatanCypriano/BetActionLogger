@@ -1,0 +1,142 @@
+import { Ban, CheckCircle2 } from "lucide-react-native";
+import { useState } from "react";
+import { Text, View } from "react-native";
+
+import { Button } from "@/components/ui/Button";
+import { InlineNotice } from "@/components/ui/InlineNotice";
+import { TextField } from "@/components/ui/TextField";
+import type { ActionEntryWithType } from "@/features/actions/types";
+import { useVoidActionEntry } from "@/features/actions/hooks/useVoidActionEntry";
+import { formatCurrencyCents } from "@/features/actions/utils/money";
+import { formatSaoPauloDateTime } from "@/features/actions/utils/month";
+import { colors } from "@/theme/colors";
+import { textStyles } from "@/theme/text";
+
+type EntryListProps = {
+  allowVoid?: boolean;
+  entries: ActionEntryWithType[];
+};
+
+export function EntryList({ allowVoid = false, entries }: EntryListProps) {
+  const [voidReasons, setVoidReasons] = useState<Record<string, string>>({});
+  const [voidErrors, setVoidErrors] = useState<Record<string, string>>({});
+  const voidMutation = useVoidActionEntry();
+
+  if (entries.length === 0) {
+    return <InlineNotice tone="empty" message="Nenhuma ação encontrada." />;
+  }
+
+  return (
+    <View style={{ gap: 10 }}>
+      {entries.map((entry) => {
+        const isVoided = entry.status === "voided";
+        const reason = voidReasons[entry.id] ?? "";
+        const validationError = voidErrors[entry.id];
+
+        return (
+          <View
+            key={entry.id}
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: isVoided ? colors.danger : colors.border,
+              borderRadius: 8,
+              borderWidth: 1,
+              gap: 10,
+              padding: 14
+            }}
+          >
+            <View style={{ flexDirection: "row", gap: 10, justifyContent: "space-between" }}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={textStyles.bodyStrong}>{entry.action_type_name}</Text>
+                <Text style={textStyles.caption}>{formatSaoPauloDateTime(entry.occurred_at)}</Text>
+              </View>
+              <Text style={textStyles.bodyStrong}>
+                {formatCurrencyCents(entry.unit_price_cents_snapshot)}
+              </Text>
+            </View>
+
+            {entry.note ? <Text style={textStyles.body}>{entry.note}</Text> : null}
+
+            <View style={{ alignItems: "center", flexDirection: "row", gap: 8 }}>
+              {isVoided ? (
+                <Ban color={colors.danger} size={16} />
+              ) : (
+                <CheckCircle2 color={colors.success} size={16} />
+              )}
+              <Text style={isVoided ? { color: colors.danger } : { color: colors.success }}>
+                {isVoided ? "Anulada" : "Confirmada"}
+              </Text>
+            </View>
+
+            {entry.void_reason ? (
+              <InlineNotice tone="warning" message={`Motivo: ${entry.void_reason}`} />
+            ) : null}
+
+            {allowVoid && !isVoided ? (
+              <View style={{ gap: 8 }}>
+                <TextField
+                  label="Motivo da anulação"
+                  onChangeText={(text) => {
+                    setVoidReasons((current) => ({
+                      ...current,
+                      [entry.id]: text
+                    }));
+                    setVoidErrors((current) => ({
+                      ...current,
+                      [entry.id]: ""
+                    }));
+                  }}
+                  placeholder="Obrigatório para anular"
+                  value={reason}
+                />
+                {validationError ? <InlineNotice tone="error" message={validationError} /> : null}
+                {voidMutation.isError ? (
+                  <InlineNotice
+                    tone="error"
+                    message="Não foi possível anular. A ação pode estar em um ciclo fechado."
+                  />
+                ) : null}
+                <Button
+                  disabled={voidMutation.isPending}
+                  kind="danger"
+                  loading={voidMutation.isPending}
+                  onPress={() => {
+                    const trimmedReason = reason.trim();
+
+                    if (trimmedReason.length < 3) {
+                      setVoidErrors((current) => ({
+                        ...current,
+                        [entry.id]: "Informe um motivo com pelo menos 3 caracteres."
+                      }));
+                      return;
+                    }
+
+                    voidMutation.mutate(
+                      {
+                        id: entry.id,
+                        reason: trimmedReason
+                      },
+                      {
+                        onSuccess: () => {
+                          setVoidReasons((current) => ({
+                            ...current,
+                            [entry.id]: ""
+                          }));
+                          setVoidErrors((current) => ({
+                            ...current,
+                            [entry.id]: ""
+                          }));
+                        }
+                      }
+                    );
+                  }}
+                  title="Anular ação"
+                />
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}

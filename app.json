@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Bet Action Logger",
+    "slug": "bet-action-logger",
+    "scheme": "betactionlogger",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

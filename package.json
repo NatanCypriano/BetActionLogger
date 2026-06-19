@@ -17,7 +17,9 @@
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/types/supabase.generated.ts",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "deploy": "npx expo export -p web && wrangler deploy",
+    "preview": "npx expo export -p web && wrangler dev"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
@@ -53,6 +55,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "prettier": "^3.3.3",
     "typescript": "~5.3.3",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "wrangler": "^4.102.0"
   }
 }

@@ -79,6 +79,34 @@ async function fetchEntriesByRange(
   return (data ?? []).map((row) => mapActionEntry(row as ActionEntryRowWithType));
 }
 
+export async function restoreActionEntry(id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("action_entries")
+    .update({ status: "confirmed" })
+    .eq("id", id)
+    .eq("status", "voided")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error("Não foi possível desanular a ação.");
+  }
+}
+
+export async function deleteVoidedActionEntry(id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("action_entries")
+    .delete()
+    .eq("id", id)
+    .eq("status", "voided")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error("Não foi possível excluir a ação anulada.");
+  }
+}
+
 export async function voidActionEntry(id: string, reason: string): Promise<void> {
   const { error } = await supabase
     .from("action_entries")

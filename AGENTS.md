@@ -36,6 +36,7 @@ Evite abstrações prematuras. Este é um produto pessoal com dois usuários, n�
 - visualizar o valor unitário;
 - consultar ações do mês;
 - anular uma ação própria ainda não incluída em ciclo fechado.
+- desanular ou excluir definitivamente uma ação já anulada, desde que o ciclo permaneça aberto.
 
 ### Gestor
 
@@ -47,6 +48,7 @@ Evite abstrações prematuras. Este é um produto pessoal com dois usuários, n�
 - definir o preço de cada tipo;
 - fechar um ciclo;
 - marcar um ciclo como pago;
+- reabrir ciclo fechado que ainda não foi pago;
 - consultar ciclos anteriores.
 
 ### Fora do escopo
@@ -232,7 +234,7 @@ Regras:
 - `unit_price_cents_snapshot` é preenchido pelo banco usando o preço atual do tipo;
 - o cliente não escolhe ou altera esses campos;
 - `note` tem tamanho máximo definido;
-- não usar exclusão física;
+- exclusão física somente para ação já anulada, em ciclo aberto e após confirmação explícita;
 - anulação exige motivo;
 - ação de ciclo fechado é imutável;
 - alteração de preço no tipo não muda registros antigos.
@@ -264,6 +266,7 @@ Regras:
 - `period_end >= period_start`;
 - ao fechar, o banco calcula e grava os totais;
 - após fechar, ações do intervalo não podem mudar;
+- ciclo fechado ainda não pago pode ser reaberto, descartando os totais fechados;
 - `paid` exige que o ciclo esteja fechado;
 - marcar como pago não significa que o app movimentou dinheiro.
 
@@ -554,7 +557,8 @@ Regras de maior prioridade:
 4. Toda tabela exposta deve usar RLS.
 5. Dinheiro é armazenado em centavos inteiros.
 6. O banco, e não o cliente, define autor e preço histórico das ações.
-7. Não apague registros de ações; use anulação auditável.
+7. Use anulação auditável como correção padrão; exclusão permanente só é permitida para ação já
+   anulada, em ciclo aberto e com confirmação explícita.
 8. Ações em ciclos fechados são imutáveis.
 9. Execute lint, formatação, typecheck, testes e build/exportação aplicáveis antes de concluir.
 10. Atualize documentação, migrations e testes junto com a mudança.

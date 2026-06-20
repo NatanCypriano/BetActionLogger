@@ -78,13 +78,13 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
   const selectedActionTypeId = watch("actionTypeId");
   const actionTypes = getPredefinedActionTypes(actionTypesQuery.data ?? []);
   const selectedActionType = actionTypes.find((item) => item.id === selectedActionTypeId);
-  const isOtherSelected = selectedActionType?.isOther === true;
+  const hasNoteField = selectedActionType?.has_note_field ?? false;
   const occurredAt = watch("occurredAt");
 
   const submit = handleSubmit(async (values) => {
     await createMutation.mutateAsync({
       ...values,
-      note: isOtherSelected ? values.note : undefined
+      note: hasNoteField ? values.note : undefined
     });
     onSuccess();
   });
@@ -120,7 +120,7 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
                   onPress={() => {
                     setValue("actionTypeId", actionType.id, { shouldValidate: true });
 
-                    if (!actionType.isOther) {
+                    if (!actionType.has_note_field) {
                       setValue("note", "");
                     }
                   }}
@@ -158,7 +158,7 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
             />
           </View>
 
-          {isOtherSelected ? (
+          {hasNoteField ? (
             <Controller
               control={control}
               name="note"

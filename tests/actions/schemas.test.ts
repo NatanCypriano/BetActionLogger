@@ -42,6 +42,16 @@ describe("zod schemas", () => {
     ).toBe(false);
   });
 
+  it("enables the optional note field for new action types by default", () => {
+    const result = actionTypeSchema.parse({
+      description: "",
+      name: "Depósito",
+      unitPriceCents: 125
+    });
+
+    expect(result.hasNoteField).toBe(true);
+  });
+
   it("validates login credentials shape", () => {
     expect(
       signInSchema.safeParse({ email: "operador@example.com", password: "123456" }).success

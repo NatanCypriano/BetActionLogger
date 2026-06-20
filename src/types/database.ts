@@ -23,6 +23,7 @@ export type ActionTypeRow = {
   active: boolean;
   created_at: string;
   description: string | null;
+  has_note_field: boolean;
   id: string;
   name: string;
   unit_price_cents: number;
@@ -79,6 +80,7 @@ export type Database = {
         {
           active?: boolean;
           description?: string | null;
+          has_note_field?: boolean;
           id?: string;
           name: string;
           unit_price_cents: number;
@@ -86,6 +88,7 @@ export type Database = {
         {
           active?: boolean;
           description?: string | null;
+          has_note_field?: boolean;
           name?: string;
           unit_price_cents?: number;
         }

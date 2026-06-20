@@ -1,4 +1,4 @@
-import { CheckCircle2, LockKeyhole, WalletCards } from "lucide-react-native";
+import { CheckCircle2, LockKeyhole, RotateCcw, WalletCards } from "lucide-react-native";
 import { useState } from "react";
 import { Text, View } from "react-native";
 
@@ -9,6 +9,7 @@ import { TextField } from "@/components/ui/TextField";
 import {
   useCloseCycle,
   useMarkCyclePaid,
+  useReopenCycle,
   useSettlementCycle
 } from "@/features/settlements/hooks/useSettlementCycle";
 import { formatCurrencyCents } from "@/features/actions/utils/money";
@@ -29,10 +30,13 @@ export function CycleStatusPanel({
   totalCents
 }: CycleStatusPanelProps) {
   const [paymentNote, setPaymentNote] = useState("");
+  const [showReopenConfirmation, setShowReopenConfirmation] = useState(false);
   const cycleQuery = useSettlementCycle(periodStart, periodEnd);
   const closeMutation = useCloseCycle(periodStart, periodEnd);
   const paidMutation = useMarkCyclePaid(periodStart, periodEnd);
+  const reopenMutation = useReopenCycle(periodStart, periodEnd);
   const cycle = cycleQuery.data;
+  const isMutating = closeMutation.isPending || paidMutation.isPending || reopenMutation.isPending;
 
   return (
     <View
@@ -84,7 +88,7 @@ export function CycleStatusPanel({
               ) : null}
 
               <Button
-                disabled={closeMutation.isPending || paidMutation.isPending}
+                disabled={isMutating}
                 icon={cycle?.status === "closed" ? WalletCards : CheckCircle2}
                 kind={cycle?.status === "closed" ? "primary" : "secondary"}
                 loading={closeMutation.isPending || paidMutation.isPending}
@@ -103,10 +107,53 @@ export function CycleStatusPanel({
                 }}
                 title={cycle?.status === "closed" ? "Marcar como pago" : "Fechar ciclo"}
               />
+
+              {cycle?.status === "closed" ? (
+                showReopenConfirmation ? (
+                  <View style={{ gap: 8 }}>
+                    <InlineNotice
+                      tone="warning"
+                      message="Ao reabrir, o total fechado será descartado e as ações deste período poderão ser alteradas novamente."
+                    />
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                      <View style={{ flexGrow: 1 }}>
+                        <Button
+                          disabled={isMutating}
+                          kind="secondary"
+                          onPress={() => setShowReopenConfirmation(false)}
+                          title="Cancelar reabertura"
+                        />
+                      </View>
+                      <View style={{ flexGrow: 1 }}>
+                        <Button
+                          disabled={isMutating}
+                          icon={RotateCcw}
+                          kind="danger"
+                          loading={reopenMutation.isPending}
+                          onPress={() => {
+                            reopenMutation.mutate(cycle.id, {
+                              onSuccess: () => setShowReopenConfirmation(false)
+                            });
+                          }}
+                          title="Confirmar reabertura"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ) : (
+                  <Button
+                    disabled={isMutating}
+                    icon={RotateCcw}
+                    kind="secondary"
+                    onPress={() => setShowReopenConfirmation(true)}
+                    title="Reabrir ciclo"
+                  />
+                )
+              ) : null}
             </View>
           ) : null}
 
-          {closeMutation.isError || paidMutation.isError ? (
+          {closeMutation.isError || paidMutation.isError || reopenMutation.isError ? (
             <InlineNotice tone="error" message="Não foi possível alterar o ciclo." />
           ) : null}
         </View>

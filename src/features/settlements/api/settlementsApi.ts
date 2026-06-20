@@ -46,6 +46,20 @@ export async function closeCycle(periodStart: string, periodEnd: string): Promis
   }
 }
 
+export async function reopenCycle(id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("settlement_cycles")
+    .update({ status: "open" })
+    .eq("id", id)
+    .eq("status", "closed")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error("Não foi possível reabrir o ciclo.");
+  }
+}
+
 export async function markCycleAsPaid(id: string, paymentNote?: string): Promise<void> {
   const { error } = await supabase
     .from("settlement_cycles")

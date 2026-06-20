@@ -33,6 +33,7 @@ export async function fetchAllActionTypes(): Promise<ActionType[]> {
 export async function createActionType(values: ActionTypeFormValues): Promise<void> {
   const { error } = await supabase.from("action_types").insert({
     description: values.description ?? null,
+    has_note_field: values.hasNoteField,
     name: values.name,
     unit_price_cents: values.unitPriceCents
   });
@@ -47,6 +48,7 @@ export async function updateActionType(id: string, values: ActionTypeFormValues)
     .from("action_types")
     .update({
       description: values.description ?? null,
+      has_note_field: values.hasNoteField,
       name: values.name,
       unit_price_cents: values.unitPriceCents
     })

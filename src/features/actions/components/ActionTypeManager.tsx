@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, PlusCircle, RotateCcw, Trash2 } from "lucide-react-native";
+import { Check, CheckCircle2, PlusCircle, RotateCcw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { InlineNotice } from "@/components/ui/InlineNotice";
@@ -42,6 +42,7 @@ export function ActionTypeManager() {
     resolver: zodResolver(actionTypeSchema),
     defaultValues: {
       description: "",
+      hasNoteField: true,
       name: "",
       unitPriceCents: 0
     }
@@ -55,7 +56,7 @@ export function ActionTypeManager() {
     }
 
     setEditing(null);
-    reset({ description: "", name: "", unitPriceCents: 0 });
+    reset({ description: "", hasNoteField: true, name: "", unitPriceCents: 0 });
   });
 
   const startEditing = (actionType: ActionType) => {
@@ -63,6 +64,7 @@ export function ActionTypeManager() {
     setEditing(actionType);
     reset({
       description: actionType.description ?? "",
+      hasNoteField: actionType.has_note_field,
       name: actionType.name,
       unitPriceCents: actionType.unit_price_cents
     });
@@ -70,7 +72,7 @@ export function ActionTypeManager() {
 
   const clearForm = () => {
     setEditing(null);
-    reset({ description: "", name: "", unitPriceCents: 0 });
+    reset({ description: "", hasNoteField: true, name: "", unitPriceCents: 0 });
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -130,6 +132,52 @@ export function ActionTypeManager() {
               value={value}
             />
           )}
+        />
+
+        <Controller
+          control={control}
+          name="hasNoteField"
+          render={({ field: { onChange, value } }) => {
+            const isChecked = Boolean(value);
+
+            return (
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isChecked }}
+                onPress={() => onChange(!isChecked)}
+                style={({ pressed }) => ({
+                  alignItems: "center",
+                  borderColor: colors.border,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  flexDirection: "row",
+                  gap: 10,
+                  minHeight: 48,
+                  opacity: pressed ? 0.82 : 1,
+                  padding: 12
+                })}
+              >
+                <View
+                  style={{
+                    alignItems: "center",
+                    backgroundColor: isChecked ? colors.primary : colors.surface,
+                    borderColor: isChecked ? colors.primary : colors.borderStrong,
+                    borderRadius: 4,
+                    borderWidth: 1,
+                    height: 22,
+                    justifyContent: "center",
+                    width: 22
+                  }}
+                >
+                  {isChecked ? <Check color={colors.white} size={16} strokeWidth={3} /> : null}
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={textStyles.bodyStrong}>Exibir campo de observação</Text>
+                  <Text style={textStyles.caption}>A observação continua opcional.</Text>
+                </View>
+              </Pressable>
+            );
+          }}
         />
 
         {createMutation.isError || updateMutation.isError ? (
@@ -202,6 +250,10 @@ export function ActionTypeManager() {
                 {actionType.description ? (
                   <Text style={textStyles.body}>{actionType.description}</Text>
                 ) : null}
+
+                <Text style={textStyles.caption}>
+                  Observação: {actionType.has_note_field ? "exibida" : "não exibida"}
+                </Text>
 
                 {isDeleteCandidate ? (
                   <InlineNotice

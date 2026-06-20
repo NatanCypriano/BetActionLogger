@@ -18,6 +18,13 @@ const actionTypeDeleteMigration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/202606190004_action_type_delete_policy.sql"),
   "utf8"
 );
+const actionEntryWorkflowMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "supabase/migrations/202606200001_restore_voided_entries_reopen_cycles_and_notes.sql"
+  ),
+  "utf8"
+);
 
 describe("initial Supabase migration", () => {
   it("enables RLS on every exposed table", () => {
@@ -76,5 +83,29 @@ describe("initial Supabase migration", () => {
     );
     expect(actionTypeDeleteMigration).toContain("for delete");
     expect(actionTypeDeleteMigration).toContain("to authenticated");
+  });
+
+  it("allows only voided open entries to be restored or permanently deleted", () => {
+    expect(actionEntryWorkflowMigration).toContain(
+      'create policy "action_entries_delete_voided_authenticated_open"'
+    );
+    expect(actionEntryWorkflowMigration).toContain("only voided action entries can be deleted");
+    expect(actionEntryWorkflowMigration).toContain(
+      "voided action entries can only be restored or deleted"
+    );
+    expect(actionEntryWorkflowMigration).toContain("new.void_reason = null;");
+  });
+
+  it("keeps notes configurable and clears totals when an unpaid cycle is reopened", () => {
+    expect(actionEntryWorkflowMigration).toContain(
+      "add column has_note_field boolean not null default true;"
+    );
+    expect(actionEntryWorkflowMigration).toContain("if not show_note_field then");
+    expect(actionEntryWorkflowMigration).toContain("new.note = null;");
+    expect(actionEntryWorkflowMigration).toContain(
+      "closed cycles can only be reopened or marked as paid"
+    );
+    expect(actionEntryWorkflowMigration).toContain("new.total_actions = null;");
+    expect(actionEntryWorkflowMigration).toContain("new.closed_at = null;");
   });
 });

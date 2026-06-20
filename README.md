@@ -13,6 +13,14 @@ recomendações de investimento.
 - TanStack Query
 - Vitest, ESLint e Prettier
 
+## Uso
+
+Consulte o [guia rapido de uso](docs/guia-rapido-uso.md) para o passo a passo do operador e do
+gestor.
+
+Para gerar um APK Android de distribuicao interna, consulte o
+[guia de build Android](docs/build-android-apk.md).
+
 ## Configuração
 
 1. Instale as dependências:
@@ -69,8 +77,18 @@ A migration inicial cria:
 - `settlement_cycles`
 - enums, índices, constraints, triggers e políticas RLS
 
-O banco define `actor_id`, copia o preço atual para `unit_price_cents_snapshot`, impede exclusão
-definitiva de ações, exige motivo de anulação e bloqueia mudanças em ações de ciclos fechados.
+O banco define `actor_id`, copia o preço atual para `unit_price_cents_snapshot`, exige motivo de
+anulação e bloqueia mudanças em ações de ciclos fechados.
+
+## Atualizações de histórico
+
+- Cada tipo de ação pode exibir ou ocultar o campo opcional de observação. Tipos já existentes
+  passam a exibi-lo por padrão.
+- Uma ação anulada em período aberto pode ser desanulada. Ela volta a contar nos totais atuais.
+- Somente ações já anuladas e fora de ciclos fechados podem ser excluídas definitivamente, após
+  confirmação explícita na interface.
+- Um ciclo fechado, mas ainda não pago, pode ser reaberto. A reabertura limpa os totais fechados e
+  torna as ações do período editáveis novamente; ao fechá-lo outra vez, o banco recalcula os totais.
 
 ## Comandos
 

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "expo start",
     "web": "expo start --web",
-    "android": "expo start --android",
+    "android": "expo run:android",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -17,7 +17,8 @@
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/types/supabase.generated.ts",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",

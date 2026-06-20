@@ -1,4 +1,4 @@
-import { Ban, CheckCircle2 } from "lucide-react-native";
+import { Ban, CheckCircle2, RotateCcw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Text, View } from "react-native";
 
@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/Button";
 import { InlineNotice } from "@/components/ui/InlineNotice";
 import { TextField } from "@/components/ui/TextField";
 import type { ActionEntryWithType } from "@/features/actions/types";
-import { useVoidActionEntry } from "@/features/actions/hooks/useVoidActionEntry";
+import {
+  useDeleteVoidedActionEntry,
+  useRestoreActionEntry,
+  useVoidActionEntry
+} from "@/features/actions/hooks/useVoidActionEntry";
 import { formatCurrencyCents } from "@/features/actions/utils/money";
 import { formatSaoPauloDateTime } from "@/features/actions/utils/month";
 import { colors } from "@/theme/colors";
@@ -18,9 +22,14 @@ type EntryListProps = {
 };
 
 export function EntryList({ allowVoid = false, entries }: EntryListProps) {
+  const [deleteCandidateId, setDeleteCandidateId] = useState<string | null>(null);
   const [voidReasons, setVoidReasons] = useState<Record<string, string>>({});
   const [voidErrors, setVoidErrors] = useState<Record<string, string>>({});
+  const deleteMutation = useDeleteVoidedActionEntry();
+  const restoreMutation = useRestoreActionEntry();
   const voidMutation = useVoidActionEntry();
+  const isMutating =
+    voidMutation.isPending || restoreMutation.isPending || deleteMutation.isPending;
 
   if (entries.length === 0) {
     return <InlineNotice tone="empty" message="Nenhuma ação encontrada." />;
@@ -30,6 +39,7 @@ export function EntryList({ allowVoid = false, entries }: EntryListProps) {
     <View style={{ gap: 10 }}>
       {entries.map((entry) => {
         const isVoided = entry.status === "voided";
+        const isDeleteCandidate = deleteCandidateId === entry.id;
         const reason = voidReasons[entry.id] ?? "";
         const validationError = voidErrors[entry.id];
 
@@ -97,7 +107,7 @@ export function EntryList({ allowVoid = false, entries }: EntryListProps) {
                   />
                 ) : null}
                 <Button
-                  disabled={voidMutation.isPending}
+                  disabled={isMutating}
                   kind="danger"
                   loading={voidMutation.isPending}
                   onPress={() => {
@@ -132,6 +142,78 @@ export function EntryList({ allowVoid = false, entries }: EntryListProps) {
                   }}
                   title="Anular ação"
                 />
+              </View>
+            ) : null}
+
+            {allowVoid && isVoided ? (
+              <View style={{ gap: 8 }}>
+                {restoreMutation.isError ? (
+                  <InlineNotice
+                    tone="error"
+                    message="Não foi possível desanular. A ação pode estar em um ciclo fechado."
+                  />
+                ) : null}
+                {deleteMutation.isError ? (
+                  <InlineNotice
+                    tone="error"
+                    message="Não foi possível excluir. A ação pode estar em um ciclo fechado."
+                  />
+                ) : null}
+
+                {isDeleteCandidate ? (
+                  <View style={{ gap: 8 }}>
+                    <InlineNotice
+                      tone="warning"
+                      message="A exclusão é permanente e não pode ser desfeita. Confirme somente se esta ação anulada não deve permanecer no histórico."
+                    />
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                      <View style={{ flexGrow: 1 }}>
+                        <Button
+                          disabled={isMutating}
+                          kind="secondary"
+                          onPress={() => setDeleteCandidateId(null)}
+                          title="Cancelar exclusão"
+                        />
+                      </View>
+                      <View style={{ flexGrow: 1 }}>
+                        <Button
+                          disabled={isMutating}
+                          icon={Trash2}
+                          kind="danger"
+                          loading={deleteMutation.isPending}
+                          onPress={() => {
+                            deleteMutation.mutate(entry.id, {
+                              onSuccess: () => setDeleteCandidateId(null)
+                            });
+                          }}
+                          title="Confirmar exclusão permanente"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    <View style={{ flexGrow: 1 }}>
+                      <Button
+                        disabled={isMutating}
+                        icon={RotateCcw}
+                        kind="secondary"
+                        loading={restoreMutation.isPending}
+                        onPress={() => restoreMutation.mutate(entry.id)}
+                        title="Desanular ação"
+                      />
+                    </View>
+                    <View style={{ flexGrow: 1 }}>
+                      <Button
+                        disabled={isMutating}
+                        icon={Trash2}
+                        kind="danger"
+                        onPress={() => setDeleteCandidateId(entry.id)}
+                        title="Excluir definitivamente"
+                      />
+                    </View>
+                  </View>
+                )}
               </View>
             ) : null}
           </View>

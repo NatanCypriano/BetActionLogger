@@ -19,40 +19,6 @@ import { formatSaoPauloDateTime } from "@/features/actions/utils/month";
 import { colors } from "@/theme/colors";
 import { textStyles } from "@/theme/text";
 
-type ActionOption = ActionType & {
-  displayName: string;
-  isOther: boolean;
-};
-
-type ActionSlot = {
-  aliases: string[];
-  displayName: string;
-  isOther: boolean;
-};
-
-const predefinedActionSlots: ActionSlot[] = [
-  {
-    aliases: ["verificacao"],
-    displayName: "Verificação",
-    isOther: false
-  },
-  {
-    aliases: ["deposito"],
-    displayName: "Depósito",
-    isOther: false
-  },
-  {
-    aliases: ["saque"],
-    displayName: "Saque",
-    isOther: false
-  },
-  {
-    aliases: ["outro", "outra", "outras", "outra acao"],
-    displayName: "Outras",
-    isOther: true
-  }
-];
-
 type ActionEntryFormProps = {
   onCancel: () => void;
   onSuccess: () => void;
@@ -76,7 +42,9 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
     }
   });
   const selectedActionTypeId = watch("actionTypeId");
-  const actionTypes = getPredefinedActionTypes(actionTypesQuery.data ?? []);
+  // The active catalog is the single source of truth for choices available to the operator.
+  // New types are immediately available after the mutation invalidates this query.
+  const actionTypes: ActionType[] = actionTypesQuery.data ?? [];
   const selectedActionType = actionTypes.find((item) => item.id === selectedActionTypeId);
   const hasNoteField = selectedActionType?.has_note_field ?? false;
   const occurredAt = watch("occurredAt");
@@ -101,10 +69,7 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
       ) : actionTypesQuery.isError ? (
         <InlineNotice tone="error" message="Não foi possível carregar as ações." />
       ) : actionTypes.length === 0 ? (
-        <InlineNotice
-          tone="empty"
-          message="Nenhuma ação pré-definida está ativa. Rode a migration de ações padrão."
-        />
+        <InlineNotice tone="empty" message="Nenhum tipo de ação ativo está cadastrado." />
       ) : (
         <View style={{ gap: 14 }}>
           <View style={{ gap: 8 }}>
@@ -124,9 +89,7 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
                       setValue("note", "");
                     }
                   }}
-                  title={`${actionType.displayName} | ${formatCurrencyCents(
-                    actionType.unit_price_cents
-                  )}`}
+                  title={`${actionType.name} | ${formatCurrencyCents(actionType.unit_price_cents)}`}
                 />
               );
             })}
@@ -211,32 +174,4 @@ export function ActionEntryForm({ onCancel, onSuccess }: ActionEntryFormProps) {
       )}
     </View>
   );
-}
-
-function getPredefinedActionTypes(actionTypes: ActionType[]): ActionOption[] {
-  return predefinedActionSlots
-    .map<ActionOption | null>((slot) => {
-      const actionType = actionTypes.find((item) =>
-        slot.aliases.includes(normalizeActionName(item.name))
-      );
-
-      if (!actionType) {
-        return null;
-      }
-
-      return {
-        ...actionType,
-        displayName: slot.displayName,
-        isOther: slot.isOther
-      };
-    })
-    .filter((actionType): actionType is ActionOption => Boolean(actionType));
-}
-
-function normalizeActionName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
 }

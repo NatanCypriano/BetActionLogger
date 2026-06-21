@@ -18,11 +18,8 @@ nao guarda credenciais financeiras e nao recomenda investimentos.
 
 1. Entre no aplicativo com a conta do operador.
 2. Na tela inicial, toque em **Registrar acao**.
-3. Escolha uma das opcoes disponiveis:
-   - **Verificacao**
-   - **Deposito**
-   - **Saque**
-   - **Outras**
+3. Escolha um tipo de acao ativo. Todo tipo criado em **Configuracoes do sistema** fica
+   disponivel aqui; os tipos desativados deixam de ser oferecidos para novos registros.
 4. Confira o horario exibido. O app usa o horario atual como padrao.
 5. Se o tipo estiver configurado para exibir observacao, preencha-a se quiser. Ela pode ficar vazia.
 6. Confira o valor unitario mostrado na tela.

@@ -69,7 +69,7 @@ describe("initial Supabase migration", () => {
     expect(equalPermissionsMigration).not.toContain("only managers can change profile roles");
   });
 
-  it("keeps the MVP action field limited to predefined action types", () => {
+  it("seeds the standard action types", () => {
     for (const actionName of ["Verificação", "Depósito", "Saque", "Outro"]) {
       expect(actionTypesMigration).toContain(actionName);
     }
